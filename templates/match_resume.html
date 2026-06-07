@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>HireSense AI - ATS Resume Matcher</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link
+      rel="stylesheet"
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    />
+
+    <style>
+      body {
+        background-color: #f8f9fa;
+      }
+
+      .container {
+        margin-top: 40px;
+        margin-bottom: 40px;
+      }
+
+      .card {
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        margin-bottom: 25px;
+      }
+
+      .card-header {
+        background-color: #007bff;
+        color: white;
+        border-radius: 10px;
+        padding: 15px;
+      }
+
+      .score-box {
+        background-color: #eef5ff;
+        border-radius: 10px;
+        padding: 15px;
+        text-align: center;
+        margin-bottom: 15px;
+      }
+
+      .candidate-card {
+        border-left: 5px solid #007bff;
+      }
+
+      .skill {
+        display: inline-block;
+        background-color: #d4edda;
+        color: #155724;
+        padding: 6px 12px;
+        border-radius: 20px;
+        margin: 4px;
+        font-size: 14px;
+      }
+
+      .missing {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+
+      .badge-excellent {
+        background-color: #28a745;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 20px;
+      }
+
+      .badge-good {
+        background-color: #007bff;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 20px;
+      }
+
+      .badge-average {
+        background-color: #ffc107;
+        color: black;
+        padding: 8px 12px;
+        border-radius: 20px;
+      }
+
+      .badge-poor {
+        background-color: #dc3545;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 20px;
+      }
+
+      .progress {
+        height: 22px;
+        margin-bottom: 15px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="card">
+        <div class="card-header">
+          <h2>HireSense AI</h2>
+          <p class="mb-0">
+            AI-Powered ATS Resume Matcher | Resume Ranking | Skill Gap Analysis
+            | Candidate Insights
+          </p>
+        </div>
+
+        <div class="card-body">
+          <form action="/matcher" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+              <label for="job_description"><b>Job Description</b></label>
+              <textarea
+                class="form-control"
+                id="job_description"
+                name="job_description"
+                rows="6"
+                placeholder="Paste job description here..."
+                required
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="resumes"><b>Upload Resumes</b></label>
+              <input
+                type="file"
+                class="form-control"
+                id="resumes"
+                name="resumes"
+                multiple
+                required
+                accept=".pdf,.docx,.txt"
+              />
+              <small class="form-text text-muted">
+                Supported formats: PDF, DOCX, TXT
+              </small>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+              Analyze Resumes
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {% if message %}
+      <div class="alert alert-info">{{ message }}</div>
+      {% endif %} {% if results %}
+
+      <div class="row">
+        <div class="col-md-4">
+          <div class="score-box">
+            <h5>Total Resumes</h5>
+            <h3>{{ total_resumes }}</h3>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="score-box">
+            <h5>Average ATS Score</h5>
+            <h3>{{ average_score }}%</h3>
+          </div>
+        </div>
+
+        <div class="col-md-4">
+          <div class="score-box">
+            <h5>Best Candidate</h5>
+            <h6>{{ best_candidate }}</h6>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="mt-4 mb-3">Ranked Candidates</h3>
+
+      {% for candidate in results %}
+
+      <div class="card candidate-card">
+        <div class="card-body">
+          <h4>Rank {{ loop.index }}: {{ candidate.filename }}</h4>
+
+          <p>
+            <b>Name:</b> {{ candidate.name }} <br />
+            <b>Email:</b> {{ candidate.email }} <br />
+            <b>Phone:</b> {{ candidate.phone }}
+          </p>
+
+          <p>
+            <b>ATS Category:</b>
+
+            {% if candidate.ats_category == "Excellent" %}
+            <span class="badge-excellent">Excellent</span>
+            {% elif candidate.ats_category == "Good" %}
+            <span class="badge-good">Good</span>
+            {% elif candidate.ats_category == "Average" %}
+            <span class="badge-average">Average</span>
+            {% else %}
+            <span class="badge-poor">Poor</span>
+            {% endif %}
+          </p>
+
+          <div class="row">
+            <div class="col-md-4">
+              <div class="score-box">
+                <h5>ATS Score</h5>
+                <h2>{{ candidate.ats_score }}%</h2>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="score-box">
+                <h5>Similarity Score</h5>
+                <h2>{{ candidate.similarity_score }}%</h2>
+              </div>
+            </div>
+
+            <div class="col-md-4">
+              <div class="score-box">
+                <h5>Final Rank Score</h5>
+                <h2>{{ candidate.final_score }}%</h2>
+              </div>
+            </div>
+          </div>
+
+          <h5>ATS Score Progress</h5>
+          <div class="progress">
+            <div
+              class="progress-bar"
+              role="progressbar"
+              style="width: {{ candidate.ats_score }}%;"
+            >
+              {{ candidate.ats_score }}%
+            </div>
+          </div>
+
+          <h5>Similarity Score Progress</h5>
+          <div class="progress">
+            <div
+              class="progress-bar bg-success"
+              role="progressbar"
+              style="width: {{ candidate.similarity_score }}%;"
+            >
+              {{ candidate.similarity_score }}%
+            </div>
+          </div>
+
+          <h5 class="mt-3">Candidate Summary</h5>
+          <div class="alert alert-secondary">{{ candidate.summary }}</div>
+
+          <h5>Matched Skills</h5>
+
+          {% if candidate.matched_skills %} {% for skill in
+          candidate.matched_skills %}
+          <span class="skill">{{ skill }}</span>
+          {% endfor %} {% else %}
+          <p>No major matched skills found.</p>
+          {% endif %}
+
+          <h5 class="mt-3">Missing Skills</h5>
+
+          {% if candidate.missing_skills %} {% for skill in
+          candidate.missing_skills %}
+          <span class="skill missing">{{ skill }}</span>
+          {% endfor %} {% else %}
+          <p>No important missing skills.</p>
+          {% endif %}
+
+          <h5 class="mt-3">Resume Improvement Suggestions</h5>
+          <ul>
+            {% for suggestion in candidate.suggestions %}
+            <li>{{ suggestion }}</li>
+            {% endfor %}
+          </ul>
+
+          <h5 class="mt-3">Ranking Explanation</h5>
+          <p>
+            Final rank score is calculated using 70% ATS Score and 30%
+            Similarity Score. This gives higher priority to skill alignment,
+            formatting, education, experience, and keyword coverage.
+          </p>
+        </div>
+      </div>
+
+      {% endfor %} {% endif %}
+    </div>
+  </body>
+</html>
